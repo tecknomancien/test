@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Auto Runner Robot</title>
+<style>
+  body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
+  canvas { background: #222; display: block; margin: 0 auto; }
+  #ui { position: absolute; top: 10px; left: 10px; color: #fff; }
+</style>
+</head>
+<body>
+<canvas id="game" width="800" height="400"></canvas>
+<div id="ui"></div>
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const ui = document.getElementById('ui');
+
+const GRAVITY = 0.6;
+let speed = 4; // base speed, increases with level
+
+const player = {
+  x: 80,
+  y: 0,
+  width: 40,
+  height: 50,
+  vy: 0,
+  grounded: false
+};
+
+let obstacles = [];
+let lives = 5;
+let level = 1;
+const maxLevel = 10;
+let timeRemaining = 60;
+let spawnTimer = 0;
+let gameState = 'playing'; // playing, gameover, victory
+
+function resetPlayer() {
+  player.y = canvas.height - player.height;
+  player.vy = 0;
+  player.grounded = true;
+}
+
+function resetLevel(resetLives) {
+  if (resetLives) lives = 5;
+  timeRemaining = 60;
+  spawnTimer = 0;
+  obstacles = [];
+  resetPlayer();
+}
+
+function nextLevel() {
+  if (level < maxLevel) {
+    level++;
+    speed += 0.5; // Increase speed each level
+    resetLevel(false);
+  } else {
+    gameState = 'victory';
+  }
+}
+
+function gameOver() {
+  gameState = 'gameover';
+}
+
+function spawnObstacle() {
+  const minGap = 200 - level * 10; // reduce gap with level
+  const maxGap = 300 - level * 10;
+  const gap = Math.max(100, Math.random() * (maxGap - minGap) + minGap);
+  spawnTimer = gap / speed;
+  obstacles.push({
+    x: canvas.width,
+    y: canvas.height - 40,
+    width: 30,
+    height: 40
+  });
+}
+
+function update(delta) {
+  if (gameState !== 'playing') return;
+
+  timeRemaining -= delta;
+  if (timeRemaining <= 0) {
+    nextLevel();
+    return;
+  }
+
+  spawnTimer -= delta * 1000;
+  if (spawnTimer <= 0) {
+    spawnObstacle();
+  }
+
+  player.vy += GRAVITY;
+  player.y += player.vy;
+
+  if (player.y >= canvas.height - player.height) {
+    player.y = canvas.height - player.height;
+    player.vy = 0;
+    player.grounded = true;
+  }
+
+  obstacles.forEach(ob => {
+    ob.x -= speed;
+  });
+
+  obstacles = obstacles.filter(ob => ob.x + ob.width > 0);
+
+  // collision
+  obstacles.forEach(ob => {
+    if (player.x < ob.x + ob.width &&
+        player.x + player.width > ob.x &&
+        player.y < ob.y + ob.height &&
+        player.y + player.height > ob.y) {
+      lives--;
+      if (lives <= 0) {
+        gameOver();
+      } else {
+        resetLevel(false);
+      }
+    }
+  });
+}
+
+function drawPlayer() {
+  ctx.fillStyle = '#0f0';
+  ctx.fillRect(player.x, player.y, player.width, player.height);
+}
+
+function drawObstacles() {
+  ctx.fillStyle = '#f00';
+  obstacles.forEach(ob => {
+    ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+  });
+}
+
+function drawUI() {
+  ui.textContent = `Niveau: ${level} / ${maxLevel} - Vies: ${lives} - Temps: ${Math.ceil(timeRemaining)}s`;
+}
+
+function drawGameOver() {
+  ctx.fillStyle = '#fff';
+  ctx.font = '48px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+}
+
+function drawVictory() {
+  ctx.fillStyle = '#fff';
+  ctx.font = '48px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Victoire!', canvas.width / 2, canvas.height / 2);
+}
+
+let last = 0;
+function loop(timestamp) {
+  const delta = (timestamp - last) / 1000;
+  last = timestamp;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  update(delta);
+  drawObstacles();
+  drawPlayer();
+  drawUI();
+
+  if (gameState === 'gameover') {
+    drawGameOver();
+  } else if (gameState === 'victory') {
+    drawVictory();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && player.grounded && gameState === 'playing') {
+    player.vy = -12;
+    player.grounded = false;
+  } else if (gameState !== 'playing' && e.code === 'Enter') {
+    // restart
+    gameState = 'playing';
+    level = 1;
+    speed = 4;
+    resetLevel(true);
+  }
+});
+
+resetLevel(true);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
