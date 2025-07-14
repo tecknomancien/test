@@ -5,7 +5,13 @@
 <title>Auto Runner Robot</title>
 <style>
   body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
-  canvas { background: #222 url('fond.png') repeat-x; background-size: auto 100%; display: block; width: 100vw; height: 100vh; }
+  canvas {
+    background: #222 url('fond.png') no-repeat center center;
+    background-size: cover;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
   #ui {
     position: absolute;
     top: 20px;
@@ -209,9 +215,6 @@ function loop(timestamp) {
   last = timestamp;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  canvas.style.backgroundPosition = `-${cameraX}px 0`;
-
-
   update(delta);
   drawObstacles();
   drawPlayer();
