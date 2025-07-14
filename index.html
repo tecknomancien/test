@@ -26,14 +26,29 @@
 <body>
   <canvas id="game"></canvas>
   <div id="ui"></div>
-  <audio id="bgmusic" src="music.mp3" loop style="display:none"></audio>
-<script>
+  <audio autoplay id="bgmusic" src="music.mp3" loop style="display:none"></audio>
+  <script>
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const ui = document.getElementById('ui');
 const music = document.getElementById('bgmusic');
 const robotImg = new Image();
 robotImg.src = 'robot.png';
+
+function startMusic() {
+  const playPromise = music.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(() => {
+      const resume = () => {
+        music.play().catch(() => {});
+        window.removeEventListener('keydown', resume);
+        window.removeEventListener('click', resume);
+      };
+      window.addEventListener('keydown', resume);
+      window.addEventListener('click', resume);
+    });
+  }
+}
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -84,7 +99,7 @@ function resetLevel(resetLives) {
   cameraX = 0;
   obstacles = [];
   resetPlayer();
-  music.play().catch(() => {});
+  startMusic();
 }
 
 function nextLevel() {
@@ -231,6 +246,9 @@ function loop(timestamp) {
 
 window.addEventListener('keydown', e => {
   const isSpace = e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar';
+  if (music.paused) {
+    startMusic();
+  }
   if (isSpace && player.grounded && gameState === 'playing') {
     player.vy = JUMP_VELOCITY;
     player.grounded = false;
