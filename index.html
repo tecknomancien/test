@@ -40,6 +40,8 @@ let floorPattern = null;
 floorImg.onload = () => {
   floorPattern = ctx.createPattern(floorImg, 'repeat');
 };
+const blockImg = new Image();
+blockImg.src = 'block.jpeg';
 const FLOOR_HEIGHT = 80;
 
 function startMusic() {
@@ -138,8 +140,8 @@ function spawnObstacle() {
   spawnTimer = (gap / speed) * (1000 / 60);
   const obstacleWidth = OBSTACLE_WIDTH;
   const obstacleHeight = OBSTACLE_HEIGHT;
-  const colors = ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'];
-  const color = colors[Math.floor(Math.random() * colors.length)];
+  const hue = Math.floor(Math.random() * 360);
+  const color = `hsl(${hue}, 70%, 50%)`;
   obstacles.push({
     x: cameraX + canvas.width,
     y: canvas.height - FLOOR_HEIGHT - obstacleHeight,
@@ -218,8 +220,11 @@ function drawFloor() {
 
 function drawObstacles() {
   obstacles.forEach(ob => {
+    ctx.drawImage(blockImg, ob.x - cameraX, ob.y, ob.width, ob.height);
     ctx.fillStyle = ob.color;
+    ctx.globalCompositeOperation = 'source-atop';
     ctx.fillRect(ob.x - cameraX, ob.y, ob.width, ob.height);
+    ctx.globalCompositeOperation = 'source-over';
   });
 }
 
