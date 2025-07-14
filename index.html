@@ -5,7 +5,7 @@
 <title>Auto Runner Robot</title>
 <style>
   body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
-  canvas { background: #222 url('fond.png') center/cover no-repeat; display: block; width: 100vw; height: 100vh; }
+  canvas { background: #222 url('fond.png') repeat-x; background-size: auto 100%; display: block; width: 100vw; height: 100vh; }
   #ui {
     position: absolute;
     top: 20px;
@@ -63,6 +63,7 @@ const maxLevel = 10;
 let timeRemaining = 60;
 let spawnTimer = 0;
 let gameState = 'playing'; // playing, gameover, victory
+let cameraX = 0;
 
 function resetPlayer() {
   player.y = canvas.height - player.height;
@@ -74,6 +75,7 @@ function resetLevel(resetLives) {
   if (resetLives) lives = 5;
   timeRemaining = 60;
   spawnTimer = 0;
+  cameraX = 0;
   obstacles = [];
   resetPlayer();
   music.play().catch(() => {});
@@ -109,7 +111,7 @@ function spawnObstacle() {
   const colors = ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'];
   const color = colors[Math.floor(Math.random() * colors.length)];
   obstacles.push({
-    x: canvas.width,
+    x: cameraX + canvas.width,
     y: canvas.height - obstacleHeight,
     width: obstacleWidth,
     height: obstacleHeight,
@@ -140,11 +142,9 @@ function update(delta) {
     player.grounded = true;
   }
 
-  obstacles.forEach(ob => {
-    ob.x -= speed;
-  });
+  cameraX += speed;
 
-  obstacles = obstacles.filter(ob => ob.x + ob.width > 0);
+  obstacles = obstacles.filter(ob => ob.x - cameraX + ob.width > 0);
 
   // collision
   obstacles.forEach(ob => {
@@ -152,7 +152,7 @@ function update(delta) {
     const py = player.y + PLAYER_HITBOX_Y;
     const pw = player.width - PLAYER_HITBOX_X * 2;
     const ph = player.height - PLAYER_HITBOX_Y * 2;
-    const ox = ob.x + OBSTACLE_HITBOX;
+    const ox = ob.x - cameraX + OBSTACLE_HITBOX;
     const oy = ob.y + OBSTACLE_HITBOX;
     const ow = ob.width - OBSTACLE_HITBOX * 2;
     const oh = ob.height - OBSTACLE_HITBOX * 2;
@@ -177,7 +177,7 @@ function drawPlayer() {
 function drawObstacles() {
   obstacles.forEach(ob => {
     ctx.fillStyle = ob.color;
-    ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+    ctx.fillRect(ob.x - cameraX, ob.y, ob.width, ob.height);
   });
 }
 
@@ -209,6 +209,8 @@ function loop(timestamp) {
   last = timestamp;
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  canvas.style.backgroundPosition = `-${cameraX}px 0`;
+
 
   update(delta);
   drawObstacles();
