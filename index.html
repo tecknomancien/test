@@ -94,7 +94,7 @@ let gameState = 'playing'; // playing, gameover, victory
 let cameraX = 0;
 
 function resetPlayer() {
-  player.y = canvas.height - player.height;
+  player.y = canvas.height - FLOOR_HEIGHT - player.height;
   player.vy = 0;
   player.grounded = true;
 }
@@ -140,7 +140,7 @@ function spawnObstacle() {
   const color = colors[Math.floor(Math.random() * colors.length)];
   obstacles.push({
     x: cameraX + canvas.width,
-    y: canvas.height - obstacleHeight,
+    y: canvas.height - FLOOR_HEIGHT - obstacleHeight,
     width: obstacleWidth,
     height: obstacleHeight,
     color
@@ -164,8 +164,8 @@ function update(delta) {
   player.vy += GRAVITY;
   player.y += player.vy;
 
-  if (player.y >= canvas.height - player.height) {
-    player.y = canvas.height - player.height;
+  if (player.y >= canvas.height - FLOOR_HEIGHT - player.height) {
+    player.y = canvas.height - FLOOR_HEIGHT - player.height;
     player.vy = 0;
     player.grounded = true;
   }
