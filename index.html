@@ -35,8 +35,8 @@ let speed = 4; // base speed, increases with level
 const player = {
   x: 80,
   y: 0,
-  width: 40,
-  height: 50,
+  width: 160,
+  height: 200,
   vy: 0,
   grounded: false
 };
@@ -87,11 +87,16 @@ function spawnObstacle() {
   const gap = (Math.random() < 0.5 ? 2 : 3) * METER;
   // convert distance to time based on speed (px/frame) and 60 FPS
   spawnTimer = (gap / speed) * (1000 / 60);
+  const obstacleWidth = 120;
+  const obstacleHeight = 160;
+  const colors = ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
   obstacles.push({
     x: canvas.width,
-    y: canvas.height - 40,
-    width: 30,
-    height: 40
+    y: canvas.height - obstacleHeight,
+    width: obstacleWidth,
+    height: obstacleHeight,
+    color
   });
 }
 
@@ -145,8 +150,8 @@ function drawPlayer() {
 }
 
 function drawObstacles() {
-  ctx.fillStyle = '#f00';
   obstacles.forEach(ob => {
+    ctx.fillStyle = ob.color;
     ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
   });
 }
@@ -197,7 +202,7 @@ function loop(timestamp) {
 window.addEventListener('keydown', e => {
   const isSpace = e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar';
   if (isSpace && player.grounded && gameState === 'playing') {
-    player.vy = -12;
+    player.vy = -24;
     player.grounded = false;
   } else if (gameState !== 'playing' && e.code === 'Enter') {
     // restart
