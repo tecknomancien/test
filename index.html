@@ -65,11 +65,13 @@ function gameOver() {
   gameState = 'gameover';
 }
 
+const METER = 100; // basic unit for obstacle spacing
+
 function spawnObstacle() {
-  const minGap = 200 - level * 10; // reduce gap with level
-  const maxGap = 300 - level * 10;
-  const gap = Math.max(100, Math.random() * (maxGap - minGap) + minGap);
-  spawnTimer = gap / speed;
+  // obstacles appear every 2 or 3 "meters"
+  const gap = (Math.random() < 0.5 ? 2 : 3) * METER;
+  // convert distance to time based on speed (px/frame) and 60 FPS
+  spawnTimer = (gap / speed) * (1000 / 60);
   obstacles.push({
     x: canvas.width,
     y: canvas.height - 40,
@@ -125,7 +127,14 @@ function update(delta) {
 
 function drawPlayer() {
   ctx.fillStyle = '#0f0';
-  ctx.fillRect(player.x, player.y, player.width, player.height);
+  // body
+  ctx.fillRect(player.x, player.y + 10, player.width, player.height - 10);
+  // head
+  ctx.fillRect(player.x + 10, player.y - 10, player.width - 20, 20);
+  // eyes
+  ctx.fillStyle = '#000';
+  ctx.fillRect(player.x + 15, player.y - 6, 5, 5);
+  ctx.fillRect(player.x + player.width - 20, player.y - 6, 5, 5);
 }
 
 function drawObstacles() {
@@ -144,6 +153,8 @@ function drawGameOver() {
   ctx.font = '48px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2);
+  ctx.font = '24px sans-serif';
+  ctx.fillText('Appuyez sur Entrer pour recommencer', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 function drawVictory() {
@@ -151,6 +162,8 @@ function drawVictory() {
   ctx.font = '48px sans-serif';
   ctx.textAlign = 'center';
   ctx.fillText('Victoire!', canvas.width / 2, canvas.height / 2);
+  ctx.font = '24px sans-serif';
+  ctx.fillText('Appuyez sur Entrer pour rejouer', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 let last = 0;
@@ -175,7 +188,8 @@ function loop(timestamp) {
 }
 
 window.addEventListener('keydown', e => {
-  if (e.code === 'Space' && player.grounded && gameState === 'playing') {
+  const isSpace = e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar';
+  if (isSpace && player.grounded && gameState === 'playing') {
     player.vy = -12;
     player.grounded = false;
   } else if (gameState !== 'playing' && e.code === 'Enter') {
