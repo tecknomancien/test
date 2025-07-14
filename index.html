@@ -5,12 +5,12 @@
 <title>Auto Runner Robot</title>
 <style>
   body { margin: 0; background: #111; color: #fff; font-family: Arial, sans-serif; overflow: hidden; }
-  canvas { background: #222; display: block; margin: 0 auto; }
+  canvas { background: #222; display: block; width: 100vw; height: 100vh; }
   #ui { position: absolute; top: 10px; left: 10px; color: #fff; }
 </style>
 </head>
 <body>
-<canvas id="game" width="800" height="400"></canvas>
+  <canvas id="game"></canvas>
 <div id="ui"></div>
 <audio id="bgmusic" src="music.mp3" loop style="display:none"></audio>
 <script>
@@ -18,6 +18,14 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const ui = document.getElementById('ui');
 const music = document.getElementById('bgmusic');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
 
 const GRAVITY = 0.6;
 let speed = 4; // base speed, increases with level
