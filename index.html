@@ -34,6 +34,13 @@ const ui = document.getElementById('ui');
 const music = document.getElementById('bgmusic');
 const robotImg = new Image();
 robotImg.src = 'robot.png';
+const floorImg = new Image();
+floorImg.src = 'floor.jpg';
+let floorPattern = null;
+floorImg.onload = () => {
+  floorPattern = ctx.createPattern(floorImg, 'repeat');
+};
+const FLOOR_HEIGHT = 80;
 
 function startMusic() {
   const playPromise = music.play();
@@ -195,6 +202,17 @@ function drawPlayer() {
   ctx.drawImage(robotImg, player.x, player.y, player.width, player.height);
 }
 
+function drawFloor() {
+  if (!floorPattern) return;
+  const patternWidth = floorImg.width;
+  const offsetX = (-cameraX % patternWidth + patternWidth) % patternWidth;
+  ctx.save();
+  ctx.translate(offsetX, canvas.height - FLOOR_HEIGHT);
+  ctx.fillStyle = floorPattern;
+  ctx.fillRect(-offsetX, 0, canvas.width + patternWidth, FLOOR_HEIGHT);
+  ctx.restore();
+}
+
 function drawObstacles() {
   obstacles.forEach(ob => {
     ctx.fillStyle = ob.color;
@@ -231,6 +249,7 @@ function loop(timestamp) {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   update(delta);
+  drawFloor();
   drawObstacles();
   drawPlayer();
   drawUI();
