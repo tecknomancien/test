@@ -46,6 +46,9 @@ const obstacleImages = ['block.jpeg', 'block1.jpeg', 'block2.jpeg'].map(src => {
   return img;
 });
 const FLOOR_HEIGHT = 80;
+const PLATFORM_HEIGHT = 20;
+const PLATFORM_MIN_WIDTH = 200;
+const PLATFORM_MAX_WIDTH = 400;
 
 function startMusic() {
   const playPromise = music.play();
@@ -91,11 +94,13 @@ const player = {
 };
 
 let obstacles = [];
+let platforms = [];
 let lives = 5;
 let level = 1;
 const maxLevel = 10;
 let timeRemaining = 60;
 let spawnTimer = 0;
+let platformTimer = 0;
 let gameState = 'playing'; // playing, gameover, victory
 let cameraX = 0;
 
@@ -109,9 +114,11 @@ function resetLevel(resetLives) {
   if (resetLives) lives = 5;
   timeRemaining = 60;
   spawnTimer = 0;
+  platformTimer = 0;
   cameraX = 0;
   canvas.style.backgroundPosition = '0px 0px';
   obstacles = [];
+  platforms = [];
   resetPlayer();
   startMusic();
 }
@@ -153,6 +160,30 @@ function spawnObstacle() {
   });
 }
 
+function spawnPlatform() {
+  const jumpDist = Math.abs(JUMP_VELOCITY) / GRAVITY * 2 * speed;
+  const gap = (1 + Math.random()) * jumpDist;
+  platformTimer = (gap / speed) * (1000 / 60);
+  const width = PLATFORM_MIN_WIDTH + Math.random() * (PLATFORM_MAX_WIDTH - PLATFORM_MIN_WIDTH);
+  const height = PLATFORM_HEIGHT;
+  const x = cameraX + canvas.width;
+  const yMax = canvas.height - FLOOR_HEIGHT - 120;
+  const yMin = canvas.height - FLOOR_HEIGHT - 200;
+  const y = yMin + Math.random() * (yMax - yMin);
+  platforms.push({ x, y, width, height });
+  // 50% chance to spawn an obstacle on the new platform
+  if (Math.random() < 0.5) {
+    const img = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
+    obstacles.push({
+      x: x + width / 2 - OBSTACLE_WIDTH / 2,
+      y: y - OBSTACLE_HEIGHT,
+      width: OBSTACLE_WIDTH,
+      height: OBSTACLE_HEIGHT,
+      img
+    });
+  }
+}
+
 function update(delta) {
   if (gameState !== 'playing') return;
 
@@ -166,20 +197,41 @@ function update(delta) {
   if (spawnTimer <= 0) {
     spawnObstacle();
   }
+  platformTimer -= delta * 1000;
+  if (platformTimer <= 0) {
+    spawnPlatform();
+  }
 
   player.vy += GRAVITY;
   player.y += player.vy;
 
+  let grounded = false;
+  // check collision with platforms
+  platforms.forEach(p => {
+    const px = p.x - cameraX;
+    if (player.vy >= 0 &&
+        player.x + player.width > px &&
+        player.x < px + p.width &&
+        player.y + player.height <= p.y &&
+        player.y + player.height + player.vy >= p.y) {
+      player.y = p.y - player.height;
+      player.vy = 0;
+      grounded = true;
+    }
+  });
+
   if (player.y >= canvas.height - FLOOR_HEIGHT - player.height) {
     player.y = canvas.height - FLOOR_HEIGHT - player.height;
     player.vy = 0;
-    player.grounded = true;
+    grounded = true;
   }
+  player.grounded = grounded;
 
   cameraX += speed;
   canvas.style.backgroundPosition = `${-cameraX * BG_SCROLL_FACTOR}px 0px`;
 
   obstacles = obstacles.filter(ob => ob.x - cameraX + ob.width > 0);
+  platforms = platforms.filter(p => p.x - cameraX + p.width > 0);
 
   // collision
   obstacles.forEach(ob => {
@@ -220,6 +272,13 @@ function drawFloor() {
   ctx.restore();
 }
 
+function drawPlatforms() {
+  ctx.fillStyle = '#000';
+  platforms.forEach(p => {
+    ctx.fillRect(p.x - cameraX, p.y, p.width, p.height);
+  });
+}
+
 function drawObstacles() {
   obstacles.forEach(ob => {
     ctx.drawImage(ob.img, ob.x - cameraX, ob.y, ob.width, ob.height);
@@ -256,6 +315,7 @@ function loop(timestamp) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   update(delta);
   drawFloor();
+  drawPlatforms();
   drawObstacles();
   drawPlayer();
   drawUI();
