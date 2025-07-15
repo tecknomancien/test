@@ -208,28 +208,29 @@ function update(delta) {
   }
 
   player.vy += GRAVITY;
-  player.y += player.vy;
+  let nextY = player.y + player.vy;
 
   let grounded = false;
-  // check collision with platforms
+  // check collision with platforms using predicted next position
   platforms.forEach(p => {
     const px = p.x - cameraX;
     if (player.vy >= 0 &&
         player.x + player.width > px &&
         player.x < px + p.width &&
         player.y + player.height <= p.y &&
-        player.y + player.height + player.vy >= p.y) {
-      player.y = p.y - player.height;
+        nextY + player.height >= p.y) {
+      nextY = p.y - player.height;
       player.vy = 0;
       grounded = true;
     }
   });
 
-  if (player.y >= canvas.height - FLOOR_HEIGHT - player.height) {
-    player.y = canvas.height - FLOOR_HEIGHT - player.height;
+  if (nextY >= canvas.height - FLOOR_HEIGHT - player.height) {
+    nextY = canvas.height - FLOOR_HEIGHT - player.height;
     player.vy = 0;
     grounded = true;
   }
+  player.y = nextY;
   player.grounded = grounded;
 
   cameraX += speed;
