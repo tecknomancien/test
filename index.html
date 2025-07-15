@@ -143,14 +143,18 @@ const METER = 100; // basic unit for obstacle spacing
 // Factors used to keep gaps short enough so jumps are always possible
 const MIN_GAP_RATIO = 0.4;
 const MAX_GAP_RATIO = 0.8;
+// Minimum distance after landing before another obstacle can appear
+const MIN_LANDING_GAP = 150;
 // Ensure an obstacle only appears on sufficiently wide platforms
 const MIN_PLATFORM_WIDTH_FOR_OBSTACLE = 320;
 
 function spawnObstacle() {
   // distance the player covers during one full jump
   const jumpDist = Math.abs(JUMP_VELOCITY) / GRAVITY * 2 * speed;
-  // obstacles appear with a gap shorter than the max jump distance
-  const gap = (MIN_GAP_RATIO + Math.random() * (MAX_GAP_RATIO - MIN_GAP_RATIO)) * jumpDist;
+  // base gap between obstacles
+  let gap = (MIN_GAP_RATIO + Math.random() * (MAX_GAP_RATIO - MIN_GAP_RATIO)) * jumpDist;
+  // ensure the player has some distance after landing before the next obstacle
+  gap = Math.max(gap, jumpDist + MIN_LANDING_GAP);
   // convert distance to time based on speed (px/frame) and 60 FPS
   spawnTimer = (gap / speed) * (1000 / 60);
   const obstacleWidth = OBSTACLE_WIDTH;
@@ -178,14 +182,19 @@ function spawnPlatform() {
   platforms.push({ x, y, width, height });
   // 50% chance to spawn an obstacle on the new platform
   if (width >= MIN_PLATFORM_WIDTH_FOR_OBSTACLE && Math.random() < 0.5) {
-    const img = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
-    obstacles.push({
-      x: x + width / 2 - OBSTACLE_WIDTH / 2,
-      y: y - OBSTACLE_HEIGHT,
-      width: OBSTACLE_WIDTH,
-      height: OBSTACLE_HEIGHT,
-      img
-    });
+    const potentialX = x + width / 2 - OBSTACLE_WIDTH / 2;
+    const last = obstacles[obstacles.length - 1];
+    const lastX = last ? last.x : -Infinity;
+    if (potentialX - lastX >= jumpDist + MIN_LANDING_GAP) {
+      const img = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
+      obstacles.push({
+        x: potentialX,
+        y: y - OBSTACLE_HEIGHT,
+        width: OBSTACLE_WIDTH,
+        height: OBSTACLE_HEIGHT,
+        img
+      });
+    }
   }
 }
 
