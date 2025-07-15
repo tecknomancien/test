@@ -140,12 +140,17 @@ function gameOver() {
 }
 
 const METER = 100; // basic unit for obstacle spacing
+// Factors used to keep gaps short enough so jumps are always possible
+const MIN_GAP_RATIO = 0.4;
+const MAX_GAP_RATIO = 0.8;
+// Ensure an obstacle only appears on sufficiently wide platforms
+const MIN_PLATFORM_WIDTH_FOR_OBSTACLE = 320;
 
 function spawnObstacle() {
   // distance the player covers during one full jump
   const jumpDist = Math.abs(JUMP_VELOCITY) / GRAVITY * 2 * speed;
-  // obstacles appear with at least one jump length between them
-  const gap = (1 + Math.random()) * jumpDist;
+  // obstacles appear with a gap shorter than the max jump distance
+  const gap = (MIN_GAP_RATIO + Math.random() * (MAX_GAP_RATIO - MIN_GAP_RATIO)) * jumpDist;
   // convert distance to time based on speed (px/frame) and 60 FPS
   spawnTimer = (gap / speed) * (1000 / 60);
   const obstacleWidth = OBSTACLE_WIDTH;
@@ -162,7 +167,7 @@ function spawnObstacle() {
 
 function spawnPlatform() {
   const jumpDist = Math.abs(JUMP_VELOCITY) / GRAVITY * 2 * speed;
-  const gap = (1 + Math.random()) * jumpDist;
+  const gap = (MIN_GAP_RATIO + Math.random() * (MAX_GAP_RATIO - MIN_GAP_RATIO)) * jumpDist;
   platformTimer = (gap / speed) * (1000 / 60);
   const width = PLATFORM_MIN_WIDTH + Math.random() * (PLATFORM_MAX_WIDTH - PLATFORM_MIN_WIDTH);
   const height = PLATFORM_HEIGHT;
@@ -172,7 +177,7 @@ function spawnPlatform() {
   const y = yMin + Math.random() * (yMax - yMin);
   platforms.push({ x, y, width, height });
   // 50% chance to spawn an obstacle on the new platform
-  if (Math.random() < 0.5) {
+  if (width >= MIN_PLATFORM_WIDTH_FOR_OBSTACLE && Math.random() < 0.5) {
     const img = obstacleImages[Math.floor(Math.random() * obstacleImages.length)];
     obstacles.push({
       x: x + width / 2 - OBSTACLE_WIDTH / 2,
